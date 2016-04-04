@@ -1,0 +1,40 @@
+mysql:
+  restart: always
+  image: mysql:latest
+  volumes_from:
+    - data
+  ports:
+    - "3306:3306"
+  env_file: .env
+
+data:
+  image: busybox
+  volumes:
+   - /var/lib/mysql
+   - /home/django/app/static
+
+nginx:
+  restart: always
+  image: nginx
+  volumes:
+   - ./nginx/conf:/etc/nginx/conf.d/
+  volumes_from:
+    - data
+  ports:
+   - "80:80"
+  links:
+    - app:app
+  command: /bin/bash -c "nginx -g 'daemon off;'"
+
+app:
+  restart: always
+  build: ./app
+  expose:
+    - "8080"
+  ports:
+    - "8080:8080"
+  env_file: .env
+  links:
+    - mysql:mysql
+  volumes_from:
+    - data
